@@ -1,95 +1,52 @@
-<!doctype html>
-<html lang="{{ app()->getLocale() }}">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="imagetoolbar" content="no" />
+    <meta name="csrf-param" content="csrf_token" />
+    <meta name="csrf-token" content="mtnhAtRtDObk4ygz" />
 
-        <title>Laravel</title>
-
-        <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Raleway:100,600" rel="stylesheet" type="text/css">
-
-        <!-- Styles -->
-        <style>
-            html, body {
-                background-color: #fff;
-                color: #636b6f;
-                font-family: 'Raleway', sans-serif;
-                font-weight: 100;
-                height: 100vh;
-                margin: 0;
-            }
-
-            .full-height {
-                height: 100vh;
-            }
-
-            .flex-center {
-                align-items: center;
-                display: flex;
-                justify-content: center;
-            }
-
-            .position-ref {
-                position: relative;
-            }
-
-            .top-right {
-                position: absolute;
-                right: 10px;
-                top: 18px;
-            }
-
-            .content {
-                text-align: center;
-            }
-
-            .title {
-                font-size: 84px;
-            }
-
-            .links > a {
-                color: #636b6f;
-                padding: 0 25px;
-                font-size: 12px;
-                font-weight: 600;
-                letter-spacing: .1rem;
-                text-decoration: none;
-                text-transform: uppercase;
-            }
-
-            .m-b-md {
-                margin-bottom: 30px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-                        <a href="{{ route('register') }}">Register</a>
-                    @endauth
-                </div>
-            @endif
-
-            <div class="content">
-                <div class="title m-b-md">
-                    Laravel
-                </div>
-
-                <div class="links">
-                    <a href="https://laravel.com/docs">Documentation</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
-                </div>
+    <title>Iniciar Sesión - Tienda Nube Partners</title>
+    <link rel="shortcut icon" href="//d26lpennugtm8s.cloudfront.net/assets/common/favicon.ico"/>
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans:400,600" media="all" />
+    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="//d26lpennugtm8s.cloudfront.net/assets/common/css/tinu-gotham-f87947baa8d9759bd5d4a860dc3b71e930.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="//d26lpennugtm8s.cloudfront.net/assets/common/css/flat-ui-23f9faff7aad7190b01be6101044a2b230.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="//d26lpennugtm8s.cloudfront.net/assets/partners/css/combined-1482210b6053f997383681cba1d77c4730.css?v=67706173" media="all" />
+</head>
+<body>
+<div id="container">
+    <div style="margin-top: 15%" id="dialog" >
+        <div class="dialog-container">
+            <div class="c ssb ssst">
+                <img  src="//d26lpennugtm8s.cloudfront.net/assets/partners/img/logo-es.png?v=67706173" alt="Tienda Nube Logo" title="Tienda Nube Logo"   />
             </div>
+            <form action="{{route('loginTn')}}" method="post">
+                <div id="sign-in-form" class="lform">
+                    <div  class="container">
+                        <div class="row">
+                            <div class="col-sm-4 col-sm-offset-4">
+                                <div id="login">
+                                    <div class="form-group c">
+                                        <input  type="submit" class="admin btn btn-primary stretch nsl nav-orange btn-block btn-lg" value="Iniciar Sesión"   >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
-    </body>
+    </div>
+</div>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js" ></script>
+<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" ></script>
+<script type="text/javascript" src="//d26lpennugtm8s.cloudfront.net/assets/common/js/flat-ui-5ec0f9cd4ccf6a979f84d2849b89ad6430.js" ></script>
+<script type="text/javascript" src="//d26lpennugtm8s.cloudfront.net/assets/common/js/jquery.browser.min-962a09ae48897273201ea9624911be3a30.js" ></script>
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js" ></script>
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/localization/messages_es.js" ></script>
+<script type="text/javascript" src="//ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js" ></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js" ></script>
+</body>
 </html>

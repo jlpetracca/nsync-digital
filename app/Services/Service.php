@@ -18,13 +18,19 @@ abstract class Service {
      * @param string $token
      * @return mixed
      */
-    abstract public function syncProducts(string $token): mixed;
+    abstract public function syncProducts(string $token);
+	
+	/**
+	 * @param string $token
+	 * @return mixed
+	 */
+	abstract public function getStore(string $token);
 
     /**
      * @param array $options
      * @return mixed
      */
-    protected function curl(array $options): mixed{
+    protected function curl(array $options){
         $handle = curl_init();
         curl_setopt_array($handle, $options);
         $store = curl_exec($handle);

@@ -5,6 +5,8 @@ use App\Product;
 class TiendaNubeService extends Service
 {
     protected $credentials;
+    
+    protected $clientId;
 
     /**
      * TiendaNubeService constructor.
@@ -21,9 +23,9 @@ class TiendaNubeService extends Service
      */
     public function getToken(): string
     {
-        $auth = new \TiendaNube\Auth($this->credentials['clientId'],
-            $this->credentials['clientSecret'], $this->credentials['clientSecret']);
+        $auth = new \TiendaNube\Auth($this->credentials['clientId'], $this->credentials['clientSecret']);
         $accessToken = $auth->request_access_token($this->credentials['code']);
+        $this->setClientId($accessToken['store_id']);
         return $accessToken['access_token'];
     }
 
@@ -41,7 +43,7 @@ class TiendaNubeService extends Service
      * @param string $token
      * @return mixed
      */
-    public function syncProducts(string $token): mixed
+    public function syncProducts(string $token)
     {
         $url = 'https://api.tiendanube.com/v1/'.$this->credentials['clientId'] .
             '/products/?sort_by=best-selling&published=true&per_page=50';
@@ -59,6 +61,16 @@ class TiendaNubeService extends Service
         $productsWithStock = $this->verifyStock($getProductsParsed);
         $syncProducts = new SyncService($productsWithStock);
         $syncProducts->sync();
+    }
+	
+	/**
+	 * @param string $token
+	 * @return mixed
+	 */
+	public function getStore(string $token){
+		$api = new \TiendaNube\API($this->getClientId(), $token, 'Awesome App (contact@awesome.com)');
+		$response = $api->get("store");
+		return $response;
     }
 
     /**
@@ -120,5 +132,21 @@ class TiendaNubeService extends Service
         }
         return $productsParsed;
     }
-
+	
+	/**
+	 * @return mixed
+	 */
+	public function getClientId()
+	{
+		return $this->clientId;
+	}
+	
+	/**
+	 * @param mixed $clientId
+	 */
+	public function setClientId($clientId): void
+	{
+		$this->clientId = $clientId;
+	}
+	
 }

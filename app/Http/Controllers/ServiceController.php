@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Api\V1\Controllers;
+namespace App\Http\Controllers;
 use App\Helpers\ApiResponse;
-use App\Http\Controllers\Controller;
 use App\Services\ServiceFactory;
+use App\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class ServiceController extends Controller
 {
@@ -23,22 +25,36 @@ class ServiceController extends Controller
         $magentoService = ServiceFactory::getService('magento', $credentials);
         return ApiResponse::response(200, 'Ok', $magentoService->getToken());
     }
+	
+	/**
+	 * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+	 */
+	function doLoginTiendaNube(){
+		return redirect('https://www.tiendanube.com/apps/668/authorize');
+    }
 
     /**
      * @param Request $request
      * @return JsonResponse
      */
-    public function tiendaNube(Request $request): JsonResponse
-    {
+    public function tiendaNube(Request $request){
         $credentials = [
-            'clientId'     => config('tiendaNube.client_id'),
-            'clientSecret' => config('tiendaNube.client_secret'),
+            'clientId'     => '668',
+            'clientSecret' => '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz',
             'code'         => $request['code']
         ];
         $tiendaNubeService = ServiceFactory::getService('tiendaNube', $credentials);
         $accessToken = $tiendaNubeService->getToken();
-        //$tiendaNubeService->syncProducts($accessToken);
-        return ApiResponse::response(200, 'OK', $accessToken);
+        $store = $tiendaNubeService->getStore($accessToken);
+	    $tokenToLogin = Password::getRepository()->createNewToken();
+	    $password = Hash::make($tokenToLogin);
+	    if(User::where('email', $store->body->email)->count()){
+		    $user = User::where('email', $store->body->email)->first();
+		    \Illuminate\Support\Facades\Auth::login($user);
+	    	dd('it works');
+	    }
+	    User::create(['name' => $store->body->name->es, 'email'=> $store->body->email, 'password'=> $password]);
+        return ApiResponse::response(200, 'OK', 'it works');
     }
 
 }
