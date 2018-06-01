@@ -1,34 +1,36 @@
 <?php
 namespace App\Services;
-use App\Product;
 
-class TiendaNubeService extends Service
-{
-    protected $credentials;
+class TiendaNubeService {
+	
+	protected $token;
+	
+	/**
+	 * @param array $credentials
+	 * @return $this
+	 * @throws \TiendaNube\Auth\Exception
+	 */
+	public function setAccessToken(array $credentials)
+    {
+        $auth = new \TiendaNube\Auth($credentials['clientId'], $credentials['clientSecret']);
+        $accessToken = $auth->request_access_token($credentials['code']);
+        $this->token = $accessToken;
+        return $this;
+    }
     
-    protected $clientId;
-
-    /**
-     * TiendaNubeService constructor.
-     * @param array $credentials
-     */
-    public function __construct(array $credentials)
-    {
-        $this->credentials = $credentials;
-    }
-
-    /**
-     * @return mixed
-     * @throws \TiendaNube\Auth\Exception
-     */
-    public function getToken(): string
-    {
-        $auth = new \TiendaNube\Auth($this->credentials['clientId'], $this->credentials['clientSecret']);
-        $accessToken = $auth->request_access_token($this->credentials['code']);
-        $this->setClientId($accessToken['store_id']);
-        return $accessToken['access_token'];
-    }
-
+	/**
+	 * @return \TiendaNube\TiendaNube
+	 */
+	public function getStore(){
+		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
+		return $api->get("store");
+	}
+	
+	public function getWebHook(){
+		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
+		return $api->get("webhooks");
+	}
+	
     /**
      * @param array $products
      * @param string $token
@@ -62,17 +64,7 @@ class TiendaNubeService extends Service
         $syncProducts = new SyncService($productsWithStock);
         $syncProducts->sync();
     }
-	
-	/**
-	 * @param string $token
-	 * @return mixed
-	 */
-	public function getStore(string $token){
-		$api = new \TiendaNube\API($this->getClientId(), $token, 'Awesome App (contact@awesome.com)');
-		$response = $api->get("store");
-		return $response;
-    }
-
+    
     /**
      * @param array $products
      * @return array
@@ -132,21 +124,16 @@ class TiendaNubeService extends Service
         }
         return $productsParsed;
     }
-	
+    
 	/**
+	 * @param array $options
 	 * @return mixed
 	 */
-	public function getClientId()
-	{
-		return $this->clientId;
+	protected function curl(array $options){
+		$handle = curl_init();
+		curl_setopt_array($handle, $options);
+		$store = curl_exec($handle);
+		$data  = json_decode($store,true);
+		return $data;
 	}
-	
-	/**
-	 * @param mixed $clientId
-	 */
-	public function setClientId($clientId): void
-	{
-		$this->clientId = $clientId;
-	}
-	
 }

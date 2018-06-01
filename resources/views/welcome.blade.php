@@ -20,7 +20,7 @@
     <div style="margin-top: 15%" id="dialog" >
         <div class="dialog-container">
             <div class="c ssb ssst">
-                <img  src="//d26lpennugtm8s.cloudfront.net/assets/partners/img/logo-es.png?v=67706173" alt="Tienda Nube Logo" title="Tienda Nube Logo"   />
+                <img  style="display: block;  margin: 0 auto;" src="//d26lpennugtm8s.cloudfront.net/assets/partners/img/logo-es.png?v=67706173" alt="Tienda Nube Logo" title="Tienda Nube Logo"   />
             </div>
             <form action="{{route('loginTn')}}" method="post">
                 <div id="sign-in-form" class="lform">
