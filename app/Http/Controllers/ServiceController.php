@@ -15,6 +15,7 @@ class ServiceController extends Controller {
 	const URL_TIENDA_NUBE = 'https://www.tiendanube.com/apps/668/authorize';
 	const CLIENT_ID_TIENDA_NUBE = '668';
 	const CLIENT_SECRET_TIENDA_NUBE = '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz';
+	const MARKETPLACE_ID = 1;
 	
 	/**
 	 * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
@@ -38,8 +39,10 @@ class ServiceController extends Controller {
         $tiendaNubeService->setAccessToken($credentials);
         $tiendaNubeService->getWebHook();
         $store = $tiendaNubeService->getStore();
+        $tiendaNubeService->saveTiendaNubeStore();
         $this->validateUser($store);
-        return ApiResponse::response(200, 'OK', 'View In Progress');
+		$tiendaNubeService->syncProducts();
+        return ApiResponse::response(200, 'OK', null);
     }
 	
 	/**
@@ -54,9 +57,12 @@ class ServiceController extends Controller {
 	    }
 	    else{
 		    User::create([
-		    	'name' => $store->body->name->es,
-			    'email'=> $store->body->email,
-			    'password'=> $passwordForNewUser
+		    	'name'          => $store->body->name->es,
+			    'email'         => $store->body->email,
+			    'password'      => $passwordForNewUser,
+			    'status'        => true,
+			    'marketplace'   => self::MARKETPLACE_ID,
+			    'store_name'    => 'Tienda Nube'
 		    ]);
 	    }
     }

@@ -1,9 +1,18 @@
 <?php
 namespace App\Services;
+use App\tnAttributes;
+use App\tnAttributesValues;
+use App\tnCategoriesProducts;
+use App\tnProductImages;
+use App\tnProducts;
+use App\tnStore;
+use App\tnVariants;
 
 class TiendaNubeService {
 	
 	protected $token;
+	
+	const APP_STATUS = 1;
 	
 	/**
 	 * @param array $credentials
@@ -26,114 +35,132 @@ class TiendaNubeService {
 		return $api->get("store");
 	}
 	
+	public function saveTiendaNubeStore(){
+		tnStore::create([
+			'nsync_store_id'    => $this->token['store_id'],
+			'token'             => $this->token['access_token'],
+			'app_status'        => self::APP_STATUS
+	    ]);
+	}
+	
+	/**
+	 * @return \TiendaNube\TiendaNube
+	 */
 	public function getWebHook(){
 		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
 		return $api->get("webhooks");
 	}
 	
-    /**
-     * @param array $products
-     * @param string $token
-     * @return mixed|void
-     */
-    public function uploadProducts(array $products, string $token): void
-    {
-        // TODO: Implement getUploadedProducts() method.
-    }
-
-    /**
-     * @param string $token
-     * @return mixed
-     */
-    public function syncProducts(string $token)
-    {
-        $url = 'https://api.tiendanube.com/v1/'.$this->credentials['clientId'] .
-            '/products/?sort_by=best-selling&published=true&per_page=50';
-
-        $options = [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST  => 'GET',
-            CURLOPT_USERAGENT      => 'NWA Digital (interno@nwa.digital)',
-            CURLOPT_HTTPHEADER     => ["authentication: bearer". $token],
-        ];
-
-        $products = $this->curl($options);
-        $getProductsParsed = $this->getProductsParsed($products);
-        $productsWithStock = $this->verifyStock($getProductsParsed);
-        $syncProducts = new SyncService($productsWithStock);
-        $syncProducts->sync();
-    }
-    
-    /**
-     * @param array $products
-     * @return array
-     */
-    private function getProductsParsed(array $products): array
-    {
-        $productsParsed = [];
-        foreach($products as $productsParser => $product)
-        {
-            $name = $product['name']['es'];
-            $description  = !empty($product['description']['es']) ? $product['description']['es'] :
-                $key['description']['es'] = "No tiene descripción asociada";
-            $canonical_url  = $product['canonical_url'];
-
-            foreach($product['images'] as $imageParser => $image){
-
-                $product = Product::where('product_id', '=', $image['id'])->first();
-                if($product === null){
-
-                    $productsParsed[] = [
-                        'store_id'      => 1,
-                        'name'          => $name,
-                        'description'   => $description,
-                        'url'           => $canonical_url,
-                        'variation_id'  => $image['id'],
-                        'product_id'    => $image['product_id'],
-                        'src'           => $image['src'],
-                        'position'      => $image['position'],
-                        'price'         => isset($product['variants'][$image]['price']) ? $product['variants'][$image]['price'] : null,
-                        'stock'         => isset($product['variants'][$image]['stock']) ? $product['variants'][$image]['stock'] : null,
-                        'promotional_price' => isset($product['variants'][$image]['promotional_price']) ? $product['variants'][$image]['promotional_price'] : 0,
-                        'selected'      => 0,
-                        'user_id'       => 1,
-                        'link'          => $product['handle']['es']
-
-                    ];
-                }
-
-            }
-
-        }
-        return $productsParsed;
-    }
-
-    /**
-     * @param array $productsParsed
-     * @return array
-     */
-    private function verifyStock(array $productsParsed): array
-    {
-        foreach($productsParsed as $productParsed => $product)
-        {
-            if($product['position'] == 1 && $product['stock'] != 0)
-            {
-                $productsParsed[$productParsed]['selected'] = 1;
-            }
-        }
-        return $productsParsed;
-    }
-    
-	/**
-	 * @param array $options
-	 * @return mixed
-	 */
-	protected function curl(array $options){
-		$handle = curl_init();
-		curl_setopt_array($handle, $options);
-		$store = curl_exec($handle);
-		$data  = json_decode($store,true);
-		return $data;
+	public function syncProducts(){
+		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
+		$products = $api->get("products/?sort_by=best-selling&published=true&per_page=50");
+		$this->doSaveTiendaNubeProducts($products);
 	}
+	
+	/**
+	 * @param \TiendaNube\API\Response $products
+	 */
+	private function doSaveTiendaNubeProducts(\TiendaNube\API\Response $products){
+		foreach($products as $productsIndex => $productsValue) {
+			foreach ($productsValue as $productDetailIndex => $productDetail) {
+				$this->saveProductsFields($productDetail);
+				$this->saveVariantsFields($productDetail->variants[$productDetailIndex]);
+				$this->saveImagesFields($productDetail->images[$productDetailIndex]);
+				//$this->saveAttributesFields($productDetail->attributes[$productDetailIndex]);
+				//$this->saveAttributesValuesFields($productDetail->variants[$productDetailIndex]->values[$productDetailIndex]);
+				//$this->saveCategoriesProductsFields($productDetail->categories[$productDetailIndex]);
+			}
+		}
+	}
+	
+	/**
+	 * @param $categoriesProduct
+	 */
+	private function saveCategoriesProductsFields($categoriesProduct){
+		tnCategoriesProducts::create([
+			'tn_store_id'   => $this->token['store_id'],
+			'product_id'    => $categoriesProduct->product_id,
+			'category_id'   => $categoriesProduct->category_id,
+			'mage_catalog_category_product_entity_id'  =>  null
+		]);
+	}
+	
+	/**
+	 * @param $variants
+	 */
+	private function saveVariantsFields($variants){
+		tnVariants::create([
+			'tn_store_id'       => $this->token['store_id'],
+			'product_id'        => $variants->product_id,
+			'image_id'          => $variants->image_id,
+			'position'          => $variants->position,
+			'price'             => $variants->price,
+			'promotional_price' => $variants->promotional_price,
+			'stock_management'  => $variants->stock_management,
+			'stock'             => $variants->stock,
+			'weight'            => $variants->weight,
+			'width'             => $variants->width,
+			'height'            => $variants->height,
+			'depth'             => $variants->depth,
+			'sku'               => $variants->sku,
+			'barcode'           => $variants->barcode,
+			'status'            => true
+		]);
+	}
+	
+	/**
+	 * @param $images
+	 */
+	private function saveImagesFields($images){
+		tnProductImages::create([
+			'tn_store_id'  => $this->token['store_id'],
+			'product_id'   => $images->product_id,
+			'src'          => $images->src,
+			'position'     => $images->position,
+			'alt'          => null
+		]);
+	}
+	
+	/**
+	 * @param $attributesValues
+	 */
+	private function saveAttributesValuesFields($attributesValues = null){
+		tnAttributesValues::create([
+			'tn_store_id'  => $this->token['store_id'],
+			'value'        => $attributesValues->en,
+		]);
+	}
+	
+	/**
+	 * @param $attributes
+	 */
+	private function saveAttributesFields($attributes){
+		tnAttributes::create([
+			'tn_store_id'  => $this->token['store_id'],
+			'name'  =>  $attributes->en
+		]);
+	}
+	
+	/**
+	 * @param $productDetail
+	 */
+	private function saveProductsFields($productDetail){
+		tnProducts::create([
+			'tn_store_id'       => $this->token['store_id'],
+			'mage_status_id'    => null,
+			'category_id'       => null,
+			'name'              => $productDetail->name->es,
+			'description'       => !empty($productDetail->description->es) ? $productDetail->description->es :
+				$productDetail->description->es = "No tiene descripción asociada",
+			'handle'            => $productDetail->handle->es,
+			'published'         => $productDetail->published,
+			'free_shipping'     => $productDetail->free_shipping,
+			'seo_title'         => $productDetail->seo_title->es,
+			'seo_description'   =>  $productDetail->seo_description->es,
+			'brand'             => $productDetail->brand,
+			'tags'              => $productDetail->tags,
+			'status'            => null,
+		]);
+	}
+	
 }
