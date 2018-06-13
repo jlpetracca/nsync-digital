@@ -16,9 +16,6 @@ class CreateTnAttributesValuesTable extends Migration
         Schema::create('tnAttributesValues', function (Blueprint $table) {
             $table->increments('id');
 	        $table->string('tn_store_id')->nullable();
-	        $table->string('attribute_id')->nullable();
-	        $table->string('product_id')->nullable();
-	        $table->string('variant_id')->nullable();
 	        $table->string('value')->nullable();
 	        $table->string('mage_value_id')->nullable();
             $table->timestamps();

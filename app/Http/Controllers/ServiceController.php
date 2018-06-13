@@ -37,18 +37,15 @@ class ServiceController extends Controller {
         ];
         $tiendaNubeService = new TiendaNubeService();
         $tiendaNubeService->setAccessToken($credentials);
-        $tiendaNubeService->getWebHook();
-        $store = $tiendaNubeService->getStore();
-        $tiendaNubeService->saveTiendaNubeStore();
-        $this->validateUser($store);
-		$tiendaNubeService->syncProducts();
+		$this->validateUser($tiendaNubeService);
         return ApiResponse::response(200, 'OK', null);
     }
 	
 	/**
-	 * @param $store
+	 * @param TiendaNubeService $tiendaNubeService
 	 */
-	private function validateUser($store){
+	private function validateUser(TiendaNubeService $tiendaNubeService){
+		$store = $tiendaNubeService->getStore();
 	    $passwordGenerated = Password::getRepository()->createNewToken();
 	    $passwordForNewUser = Hash::make($passwordGenerated);
 	    if(User::where('email', $store->body->email)->count()){
@@ -64,6 +61,9 @@ class ServiceController extends Controller {
 			    'marketplace'   => self::MARKETPLACE_ID,
 			    'store_name'    => 'Tienda Nube'
 		    ]);
+		    $tiendaNubeService->getWebHook();
+		    $tiendaNubeService->saveTiendaNubeStore();
+		    $tiendaNubeService->syncProducts();
 	    }
     }
 

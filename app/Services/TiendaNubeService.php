@@ -2,7 +2,7 @@
 namespace App\Services;
 use App\tnAttributes;
 use App\tnAttributesValues;
-use App\tnCategoriesProducts;
+use App\tnCategories;
 use App\tnProductImages;
 use App\tnProducts;
 use App\tnStore;
@@ -54,98 +54,128 @@ class TiendaNubeService {
 	public function syncProducts(){
 		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
 		$products = $api->get("products/?sort_by=best-selling&published=true&per_page=50");
-		$this->doSaveTiendaNubeProducts($products);
+		$this->saveTnProducts($products);
 	}
 	
 	/**
-	 * @param \TiendaNube\API\Response $products
+	 * @param $products
 	 */
-	private function doSaveTiendaNubeProducts(\TiendaNube\API\Response $products){
-		foreach($products as $productsIndex => $productsValue) {
-			foreach ($productsValue as $productDetailIndex => $productDetail) {
-				$this->saveProductsFields($productDetail);
-				$this->saveVariantsFields($productDetail->variants[$productDetailIndex]);
-				$this->saveImagesFields($productDetail->images[$productDetailIndex]);
-				//$this->saveAttributesFields($productDetail->attributes[$productDetailIndex]);
-				//$this->saveAttributesValuesFields($productDetail->variants[$productDetailIndex]->values[$productDetailIndex]);
-				//$this->saveCategoriesProductsFields($productDetail->categories[$productDetailIndex]);
+	private function saveTnProducts($products){
+		foreach($products->body as $productIndex => $product) {
+			if(!tnProducts::where('product_id', $product->id)->first()){
+				$this->saveProductFields($product);
+				$this->saveAttributesFields($product->attributes);
+				$this->saveVariantsFields($product->variants);
+				$this->saveImagesFields($product->images);
+				$this->saveCategories($product->categories);
 			}
 		}
 	}
 	
 	/**
-	 * @param $categoriesProduct
+	 * @param  $categoriesProducts
 	 */
-	private function saveCategoriesProductsFields($categoriesProduct){
-		tnCategoriesProducts::create([
-			'tn_store_id'   => $this->token['store_id'],
-			'product_id'    => $categoriesProduct->product_id,
-			'category_id'   => $categoriesProduct->category_id,
-			'mage_catalog_category_product_entity_id'  =>  null
-		]);
+	private function saveCategories($categoriesProducts){
+		if(!empty($categoriesProducts)){
+			foreach($categoriesProducts as $categoryProductsIndex => $categoryProducts){
+				tnCategories::create([
+					'tn_store_id'       => $this->token['store_id'],
+					'category_id'       => $categoryProducts->id,
+					'handle'            => $categoryProducts->handle->es,
+					'name'              => $categoryProducts->name->es,
+					'description'       => $categoryProducts->description->es,
+					'parent'            => $categoryProducts->parent,
+					'seo_title'         => $categoryProducts->seo_title->es,
+					'seo_description'   => $categoryProducts->seo_description->es,
+					'subcategories'     => !empty($categoryProducts->subcategories) ?
+						$categoryProducts->subcategories[$categoryProductsIndex] : null,
+					'mage_catalog_category_product_entity_id'  => null
+				]);
+			}
+		}
 	}
 	
 	/**
-	 * @param $variants
+	 * @param $variantsValue
 	 */
-	private function saveVariantsFields($variants){
-		tnVariants::create([
-			'tn_store_id'       => $this->token['store_id'],
-			'product_id'        => $variants->product_id,
-			'image_id'          => $variants->image_id,
-			'position'          => $variants->position,
-			'price'             => $variants->price,
-			'promotional_price' => $variants->promotional_price,
-			'stock_management'  => $variants->stock_management,
-			'stock'             => $variants->stock,
-			'weight'            => $variants->weight,
-			'width'             => $variants->width,
-			'height'            => $variants->height,
-			'depth'             => $variants->depth,
-			'sku'               => $variants->sku,
-			'barcode'           => $variants->barcode,
-			'status'            => true
-		]);
+	private function saveAttributesValuesFields($variantsValue){
+		foreach ($variantsValue as $valueIndex => $value){
+			tnAttributesValues::create([
+				'tn_store_id'   => $this->token['store_id'],
+				'value'         => $value->es,
+				'mage_value_id' => null,
+			]);
+		}
 	}
 	
 	/**
 	 * @param $images
 	 */
 	private function saveImagesFields($images){
-		tnProductImages::create([
-			'tn_store_id'  => $this->token['store_id'],
-			'product_id'   => $images->product_id,
-			'src'          => $images->src,
-			'position'     => $images->position,
-			'alt'          => null
-		]);
+		if(!empty($images)){
+			foreach($images as $imageIndex => $image){
+				tnProductImages::create([
+					'tn_store_id'  => $this->token['store_id'],
+					'product_id'   => $image->product_id,
+					'src'          => $image->src,
+					'position'     => $image->position,
+					'alt'          => null
+				]);
+			}
+		}
 	}
 	
 	/**
-	 * @param $attributesValues
+	 * @param $variants
 	 */
-	private function saveAttributesValuesFields($attributesValues = null){
-		tnAttributesValues::create([
-			'tn_store_id'  => $this->token['store_id'],
-			'value'        => $attributesValues->en,
-		]);
+	private function saveVariantsFields($variants){
+		if(!empty($variants)){
+			foreach($variants as $variantIndex => $variant){
+				if(!empty($variant->values)){
+					$this->saveAttributesValuesFields($variant->values);
+				}
+				tnVariants::create([
+					'tn_store_id'       => $this->token['store_id'],
+					'product_id'        => $variant->product_id,
+					'image_id'          => $variant->image_id,
+					'position'          => $variant->position,
+					'price'             => $variant->price,
+					'promotional_price' => $variant->promotional_price,
+					'stock_management'  => $variant->stock_management,
+					'stock'             => $variant->stock,
+					'weight'            => $variant->weight,
+					'width'             => $variant->width,
+					'height'            => $variant->height,
+					'depth'             => $variant->depth,
+					'sku'               => $variant->sku,
+					'barcode'           => $variant->barcode,
+					'status'            => true
+				]);
+			}
+		}
 	}
 	
 	/**
 	 * @param $attributes
 	 */
 	private function saveAttributesFields($attributes){
-		tnAttributes::create([
-			'tn_store_id'  => $this->token['store_id'],
-			'name'  =>  $attributes->en
-		]);
+		if(!empty($attributes)){
+			foreach($attributes as $attributeIndex => $attribute){
+				tnAttributes::create([
+					'tn_store_id'       => $this->token['store_id'],
+					'name'              => $attribute->es,
+					'mage_attribute_id' => null
+				]);
+			}
+		}
 	}
 	
 	/**
 	 * @param $productDetail
 	 */
-	private function saveProductsFields($productDetail){
+	private function saveProductFields($productDetail){
 		tnProducts::create([
+			'product_id'        => $productDetail->id,
 			'tn_store_id'       => $this->token['store_id'],
 			'mage_status_id'    => null,
 			'category_id'       => null,
@@ -156,11 +186,10 @@ class TiendaNubeService {
 			'published'         => $productDetail->published,
 			'free_shipping'     => $productDetail->free_shipping,
 			'seo_title'         => $productDetail->seo_title->es,
-			'seo_description'   =>  $productDetail->seo_description->es,
+			'seo_description'   => $productDetail->seo_description->es,
 			'brand'             => $productDetail->brand,
 			'tags'              => $productDetail->tags,
 			'status'            => null,
 		]);
 	}
-	
 }

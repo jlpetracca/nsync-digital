@@ -15,6 +15,7 @@ class CreateTnProductsTable extends Migration
     {
         Schema::create('tnProducts', function (Blueprint $table) {
             $table->increments('id');
+	        $table->string('product_id')->nullable();
             $table->string('tn_store_id')->nullable();
             $table->string('mage_status_id')->nullable();
 	        $table->string('category_id')->nullable();

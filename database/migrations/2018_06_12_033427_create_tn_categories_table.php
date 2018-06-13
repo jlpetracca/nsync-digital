@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateTnCategoriesProductsTable extends Migration
+class CreateTnCategoriesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,17 @@ class CreateTnCategoriesProductsTable extends Migration
      */
     public function up()
     {
-        Schema::create('tnCategoriesProducts', function (Blueprint $table) {
+        Schema::create('tnCategories', function (Blueprint $table) {
             $table->increments('id');
             $table->string('tn_store_id')->nullable();
-	        $table->string('product_id')->nullable();
+	        $table->string('handle')->nullable();
 	        $table->string('category_id')->nullable();
+	        $table->string('name')->nullable();
+	        $table->string('description')->nullable();
+	        $table->string('parent')->nullable();
+	        $table->string('subcategories')->nullable();
+	        $table->string('seo_title')->nullable();
+	        $table->string('seo_description')->nullable();
 	        $table->string('mage_catalog_category_product_entity_id')->nullable();
             $table->timestamps();
         });
