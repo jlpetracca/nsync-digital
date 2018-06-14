@@ -20,7 +20,7 @@ class CreateTnProductsTable extends Migration
             $table->string('mage_status_id')->nullable();
 	        $table->string('category_id')->nullable();
 	        $table->string('name')->nullable();
-	        $table->string('description')->nullable();
+	        $table->text('description')->nullable();
 	        $table->string('handle')->nullable();
 	        $table->string('published')->nullable();
 	        $table->string('free_shipping')->nullable();

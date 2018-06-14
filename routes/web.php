@@ -16,7 +16,7 @@ Route::get('/', function () {
 });
 
 Route::post('/loginTn', 'ServiceController@doLoginTiendaNube')->name('loginTn');
-Route::get('/tiendaNube', 'ServiceController@tiendaNube');
+Route::get('/tiendaNube', 'ServiceController@tiendaNubeManager');
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();

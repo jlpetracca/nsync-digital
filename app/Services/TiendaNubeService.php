@@ -13,6 +13,10 @@ class TiendaNubeService {
 	protected $token;
 	
 	const APP_STATUS = 1;
+	const URL_TIENDA_NUBE = 'https://www.tiendanube.com/apps/668/authorize';
+	const CLIENT_ID_TIENDA_NUBE = '668';
+	const CLIENT_SECRET_TIENDA_NUBE = '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz';
+	const MARKETPLACE_ID = 1;
 	
 	/**
 	 * @param array $credentials

@@ -12,16 +12,17 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller {
 	
-	const URL_TIENDA_NUBE = 'https://www.tiendanube.com/apps/668/authorize';
-	const CLIENT_ID_TIENDA_NUBE = '668';
-	const CLIENT_SECRET_TIENDA_NUBE = '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz';
-	const MARKETPLACE_ID = 1;
+	private $tiendaNube;
+	
+	public function __construct(){
+		$this->tiendaNube = new TiendaNubeService();
+	}
 	
 	/**
 	 * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
 	 */
 	function doLoginTiendaNube(){
-		return redirect(self::URL_TIENDA_NUBE);
+		return redirect($this->tiendaNube::URL_TIENDA_NUBE);
     }
 	
 	/**
@@ -29,25 +30,19 @@ class ServiceController extends Controller {
 	 * @return JsonResponse
 	 * @throws \TiendaNube\Auth\Exception
 	 */
-	public function tiendaNube(Request $request){
+	public function tiendaNubeManager(Request $request){
         $credentials = [
-            'clientId'     => self::CLIENT_ID_TIENDA_NUBE,
-            'clientSecret' => self::CLIENT_SECRET_TIENDA_NUBE,
+            'clientId'     => $this->tiendaNube::CLIENT_ID_TIENDA_NUBE,
+            'clientSecret' => $this->tiendaNube::CLIENT_SECRET_TIENDA_NUBE,
             'code'         => $request['code']
         ];
-        $tiendaNubeService = new TiendaNubeService();
-        $tiendaNubeService->setAccessToken($credentials);
-		$this->validateUser($tiendaNubeService);
+        $this->tiendaNube->setAccessToken($credentials);
+		$this->validateUser();
         return ApiResponse::response(200, 'OK', null);
     }
-	
-	/**
-	 * @param TiendaNubeService $tiendaNubeService
-	 */
-	private function validateUser(TiendaNubeService $tiendaNubeService){
-		$store = $tiendaNubeService->getStore();
-	    $passwordGenerated = Password::getRepository()->createNewToken();
-	    $passwordForNewUser = Hash::make($passwordGenerated);
+    
+	private function validateUser(){
+		$store = $this->tiendaNube->getStore();
 	    if(User::where('email', $store->body->email)->count()){
 		    $user = User::where('email', $store->body->email)->first();
 		    Auth::login($user);
@@ -56,15 +51,23 @@ class ServiceController extends Controller {
 		    User::create([
 		    	'name'          => $store->body->name->es,
 			    'email'         => $store->body->email,
-			    'password'      => $passwordForNewUser,
+			    'password'      => $this->generatePasswordForUser(),
 			    'status'        => true,
-			    'marketplace'   => self::MARKETPLACE_ID,
+			    'marketplace'   => $this->tiendaNube::MARKETPLACE_ID,
 			    'store_name'    => 'Tienda Nube'
 		    ]);
-		    $tiendaNubeService->getWebHook();
-		    $tiendaNubeService->saveTiendaNubeStore();
-		    $tiendaNubeService->syncProducts();
+		    $this->tiendaNube->getWebHook();
+		    $this->tiendaNube->saveTiendaNubeStore();
+		    $this->tiendaNube->syncProducts();
 	    }
+    }
+	
+	/**
+	 * @return string
+	 */
+	private function generatePasswordForUser(){
+	    $passwordGenerated = Password::getRepository()->createNewToken();
+	    return Hash::make($passwordGenerated);
     }
 
 }
