@@ -8,7 +8,8 @@ use App\tnProducts;
 use App\tnStore;
 use App\tnVariants;
 
-class TiendaNubeService {
+class TiendaNubeService
+{
 	
 	protected $token;
 	

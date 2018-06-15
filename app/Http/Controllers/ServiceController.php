@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Helpers\ApiResponse;
+use App\Jobs\ProcessProducts;
 use App\Services\TiendaNubeService;
 use App\User;
 use Illuminate\Http\JsonResponse;
@@ -59,6 +60,8 @@ class ServiceController extends Controller {
 		    $this->tiendaNube->getWebHook();
 		    $this->tiendaNube->saveTiendaNubeStore();
 		    $this->tiendaNube->syncProducts();
+		    $job = new ProcessProducts($this->tiendaNube);
+		    $job->delay(30);
 	    }
     }
 	
