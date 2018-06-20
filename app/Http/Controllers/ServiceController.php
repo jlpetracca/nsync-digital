@@ -59,7 +59,7 @@ class ServiceController extends Controller {
 		    ]);
 		    $this->tiendaNube->getWebHook();
 		    $this->tiendaNube->saveTiendaNubeStore();
-		    $this->tiendaNube->syncProducts();
+		    //$this->tiendaNube->syncProducts();
 		    $job = new ProcessProducts($this->tiendaNube);
 		    $job->delay(30);
 	    }
