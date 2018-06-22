@@ -42,7 +42,8 @@ class TiendaNubeService
 	
 	public function saveTiendaNubeStore(){
 		tnStore::create([
-			'nsync_store_id'    => $this->token['store_id'],
+			'id'                => $this->token['store_id'],
+			'nsync_store_id'    => null,
 			'token'             => $this->token['access_token'],
 			'app_status'        => self::APP_STATUS
 	    ]);
@@ -67,9 +68,10 @@ class TiendaNubeService
 	 */
 	private function saveTnProducts($products){
 		foreach($products->body as $productIndex => $product) {
-			if(!tnProducts::where('product_id', $product->id)->first()){
+			if(!tnProducts::where('id', $product->id)->first()){
 				$this->saveProductFields($product);
 				$this->saveAttributesFields($product->attributes);
+				$this->saveAttributesValuesFields($product->attributes);
 				$this->saveVariantsFields($product->variants);
 				$this->saveImagesFields($product->images);
 				$this->saveCategories($product->categories);
@@ -84,17 +86,17 @@ class TiendaNubeService
 		if(!empty($categoriesProducts)){
 			foreach($categoriesProducts as $categoryProductsIndex => $categoryProducts){
 				tnCategories::create([
+					'id'                => $categoryProducts->id,
 					'tn_store_id'       => $this->token['store_id'],
-					'category_id'       => $categoryProducts->id,
 					'handle'            => $categoryProducts->handle->es,
 					'name'              => $categoryProducts->name->es,
 					'description'       => $categoryProducts->description->es,
 					'parent'            => $categoryProducts->parent,
 					'seo_title'         => $categoryProducts->seo_title->es,
 					'seo_description'   => $categoryProducts->seo_description->es,
-					'subcategories'     => !empty($categoryProducts->subcategories) ?
-						$categoryProducts->subcategories[$categoryProductsIndex] : null,
-					'mage_catalog_category_product_entity_id'  => null
+					//'subcategories'     => !empty($categoryProducts->subcategories) ?
+						//$categoryProducts->subcategories[$categoryProductsIndex] : null,
+					'mage_catalog_category_product_entity_id'   => null
 				]);
 			}
 		}
@@ -109,6 +111,9 @@ class TiendaNubeService
 				'tn_store_id'   => $this->token['store_id'],
 				'value'         => $value->es,
 				'mage_value_id' => null,
+				'attribute_id'  => 0,
+				'product_id'    => null,
+				'variant_id'    => null
 			]);
 		}
 	}
@@ -120,6 +125,7 @@ class TiendaNubeService
 		if(!empty($images)){
 			foreach($images as $imageIndex => $image){
 				tnProductImages::create([
+					'id'           => $image->id,
 					'tn_store_id'  => $this->token['store_id'],
 					'product_id'   => $image->product_id,
 					'src'          => $image->src,
@@ -140,6 +146,7 @@ class TiendaNubeService
 					$this->saveAttributesValuesFields($variant->values);
 				}
 				tnVariants::create([
+					'id'                => $variant->id,
 					'tn_store_id'       => $this->token['store_id'],
 					'product_id'        => $variant->product_id,
 					'image_id'          => $variant->image_id,
@@ -180,10 +187,9 @@ class TiendaNubeService
 	 */
 	private function saveProductFields($productDetail){
 		tnProducts::create([
-			'product_id'        => $productDetail->id,
+			'id'                => $productDetail->id,
 			'tn_store_id'       => $this->token['store_id'],
-			'mage_status_id'    => null,
-			'category_id'       => null,
+			'mage_entity_id'    => null,
 			'name'              => $productDetail->name->es,
 			'description'       => !empty($productDetail->description->es) ? $productDetail->description->es :
 				$productDetail->description->es = "No tiene descripción asociada",

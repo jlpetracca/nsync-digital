@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class tnStore extends Model
 {
-    protected $table = 'tnStore';
+    protected $table = 'tn_store';
+	public $timestamps = false;
 	
 	/**
 	 * The attributes that are mass assignable.
@@ -14,6 +15,6 @@ class tnStore extends Model
 	 * @var array
 	 */
 	protected $fillable = [
-		'nsync_store_id', 'token', 'app_status'
+		'id', 'nsync_store_id', 'token', 'app_status'
 	];
 }

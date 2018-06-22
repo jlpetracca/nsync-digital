@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class tnVariants extends Model
 {
-	protected $table = 'tnVariants';
+	protected $table = 'tn_variants';
 	
 	/**
 	 * The attributes that are mass assignable.
@@ -14,7 +14,7 @@ class tnVariants extends Model
 	 * @var array
 	 */
 	protected $fillable = [
-		'tn_store_id', 'product_id', 'image_id', 'position','price','promotional_price', 'stock_management',
+		'id','tn_store_id', 'product_id', 'image_id', 'position','price','promotional_price', 'stock_management',
 		'stock','weight','width','height', 'depth', 'sku', 'barcode', 'status'
 	];
 }
