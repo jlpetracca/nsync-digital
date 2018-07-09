@@ -120,7 +120,7 @@ class TiendaNubeService {
 	private function saveTnAttributesOnDBAndGetId($attributes = []){
 		if(!empty($attributes)){
 			foreach($attributes as $attributeIndex => $attribute){
-				if(!tnAttributes::where('tn_store_id', $this->token['store_id'])->first()){
+				if(!tnAttributes::where('name', $attribute->es)->where('tn_store_id', $this->token['store_id'])->first()){
 					tnAttributes::create([
 						'tn_store_id'       => $this->token['store_id'],
 						'name'              => $attribute->es,

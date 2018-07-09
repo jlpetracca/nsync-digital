@@ -846,9 +846,6 @@ CHARACTER SET = latin1
 COLLATE = latin1_swedish_ci
 ENGINE = InnoDB;
 
--- Dump data of "tn_store" ---------------------------------
-INSERT INTO `tn_store`(`id`,`nsync_store_id`,`token`,`app_status`) VALUES ( '356557', NULL, '7054b1c871539e35db3e20ecfac5391100141357', '1' );
--- ---------------------------------------------------------
 
 
 -- CREATE INDEX "fk_tn_store_stores_1" ---------------------
@@ -942,8 +939,6 @@ ENGINE = InnoDB;
 -- ---------------------------------------------------------
 ALTER TABLE tn_products ADD CONSTRAINT tn_products_tn_store_id_fk FOREIGN KEY (tn_store_id) REFERENCES tn_store (id);
 
--- Dump data of "tn_products" ------------------------------
-INSERT INTO `tn_products`(`id`,`tn_store_id`,`mage_entity_id`,`name`,`description`,`handle`,`published`,`free_shipping`,`seo_title`,`seo_description`,`brand`,`created_at`,`updated_at`,`tags`,`status`) VALUES ( '17947844', '356557',  NULL, 'Celulares Sin variantesbbbbbbbbb', 'No tiene descripción asociada', 'celulares-sin-variantesbbbbbbbbb', '1', '0', '', '', '', '2018-06-21 20:41:26', '2018-06-21 20:41:26', '', NULL );
 
 -- ---------------------------------------------------------
 CREATE INDEX `tn_store_id` USING BTREE ON `tn_products`( `tn_store_id` );
@@ -1080,9 +1075,6 @@ ALTER TABLE tn_variants ADD CONSTRAINT tn_variants_tn_products_id_fk FOREIGN KEY
 ALTER TABLE tn_variants ADD CONSTRAINT tn_variants_tn_product_image_id_fk FOREIGN KEY (image_id) REFERENCES tn_product_image (id);
 
 
--- Dump data of "tn_variants" ------------------------------
-INSERT INTO `tn_variants`(`id`,`tn_store_id`,`product_id`,`image_id`,`position`,`price`,`promotional_price`,`stock_management`,`stock`,`weight`,`width`,`height`,`depth`,`sku`,`barcode`,`created_at`,`updated_at`,`status`) VALUES ( '35442031', '356557', '17947844', NULL, '1', '200.00', NULL, '1', '3', '900', '0', '0', '0.00', NULL, NULL, '2018-06-21 20:41:27', '2018-06-21 20:41:27', '1' );
-
 -- ---------------------------------------------------------
 CREATE INDEX `fk_tn_variants_tn_products_1` USING BTREE ON `tn_variants`( `product_id` );
 CREATE INDEX `fk_tn_variants_tn_product_image_1` USING BTREE ON `tn_variants`( `image_id` );
@@ -1119,26 +1111,6 @@ CREATE INDEX `fk_tn_variants_attributes_tn_store_1` USING BTREE ON `tn_attribute
 
 
 
-
-
-
-
-/*
-
-#TEST
-
-INSERT INTO tn_attributes (id, tn_store_id, name, mage_attribute_id) VALUES (1, 356557, 'Color', NULL);
-INSERT INTO tn_attributes (id, tn_store_id, name, mage_attribute_id) VALUES (2, 356557, 'Memoria', NULL);
-
-INSERT INTO tn_attributes_values (id, tn_store_id, attribute_id, value, mage_value_id) VALUES (1, 356557, 1, 'Rojo', NULL);
-INSERT INTO tn_attributes_values (id, tn_store_id, attribute_id, value, mage_value_id) VALUES (2, 356557, 2, '32 gb', NULL);
-
-
-INSERT INTO tn_variants_attributes (id, tn_store_id, product_id, variant_id, attribute_id, attribute_value_id) VALUES (4, 356557, 17947844, 35442031, 1, 1);
-INSERT INTO tn_variants_attributes (id, tn_store_id, product_id, variant_id, attribute_id, attribute_value_id) VALUES (5, 356557, 17947844, 35442031, 2, 2);
-
-
-*/
 
 
 
