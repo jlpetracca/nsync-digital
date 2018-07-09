@@ -96,12 +96,14 @@ class TiendaNubeService {
 		foreach($aValues as $valuesObject) {
 			if(!empty($valuesObject)){
 				foreach($valuesObject as $aId => $value){
-					tnAttributesValues::create([
-						'tn_store_id'   => $this->token['store_id'],
-						'value'         => $value->es,
-						'attribute_id'  => $attributeIds[$aId],
-						'mage_value_id' => null
-					]);
+					if(!tnAttributesValues::where('value',  $value->es)->first()){
+						tnAttributesValues::create([
+							'tn_store_id'   => $this->token['store_id'],
+							'value'         => $value->es,
+							'attribute_id'  => $attributeIds[$aId],
+							'mage_value_id' => null
+						]);
+					}
 				}
 			}
 		}
