@@ -12,11 +12,11 @@ class TiendaNubeService {
 	
 	protected $token;
 	
-	const APP_STATUS = 1;
-	const URL_TIENDA_NUBE = 'https://www.tiendanube.com/apps/668/authorize';
-	const CLIENT_ID_TIENDA_NUBE = '668';
+	const APP_STATUS                = 1;
+	const URL_TIENDA_NUBE           = 'https://www.tiendanube.com/apps/668/authorize';
+	const CLIENT_ID_TIENDA_NUBE     = '668';
 	const CLIENT_SECRET_TIENDA_NUBE = '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz';
-	const MARKETPLACE_ID = 1;
+	const MARKETPLACE_ID            = 1;
 
 	/**
 	 * @param array $credentials
@@ -41,12 +41,14 @@ class TiendaNubeService {
 	 * Save Principal storeInfo
 	 */
 	public function saveTiendaNubeStore(){
-		tnStore::create([
-			'id'                => $this->token['store_id'],
-			'nsync_store_id'    => null,
-			'token'             => $this->token['access_token'],
-			'app_status'        => self::APP_STATUS
-		]);
+		if(!tnStore::where('id', $this->token['store_id'])->first()){
+			tnStore::create([
+				'id'                => $this->token['store_id'],
+				'nsync_store_id'    => null,
+				'token'             => $this->token['access_token'],
+				'app_status'        => self::APP_STATUS
+			]);
+		}
 	}
 	
 	/**
@@ -60,16 +62,16 @@ class TiendaNubeService {
 	/*
 	 * Sync Products from TN
 	 */
-	public function syncProducts(){
+	public function getTnProducts(){
 		$api = new \TiendaNube\API($this->token['store_id'], $this->token['access_token'], 'Awesome App (contact@awesome.com)');
 		$products = $api->get("products/?sort_by=best-selling&published=true&per_page=50");
-		$this->saveTnProducts($products);
+		$this->processTnProducts($products);
 	}
 	
 	/**
 	 * @param $products
 	 */
-	private function saveTnProducts($products){
+	private function processTnProducts($products){
 		foreach($products->body as $productIndex => $product){
 			//Process tnProduct
 			$this->saveTnProductFieldOnDB($product);
@@ -91,7 +93,10 @@ class TiendaNubeService {
 	 * @return mixed
 	 */
 	private function saveAvaluesAndAssignAIdOnDB($aValues = []){
-		$attributeIds = tnAttributes::where('id' ,'>' ,0)->pluck('id')->toArray();
+		$attributeIds = tnAttributes::where('id' ,'>' ,0)
+			->where('tn_store_id', $this->token['store_id'])
+			->pluck('id')
+			->toArray();
 		foreach($aValues as $valuesObject) {
 			if(!empty($valuesObject)){
 				foreach($valuesObject as $aId => $value){
@@ -115,7 +120,7 @@ class TiendaNubeService {
 	private function saveTnAttributesOnDBAndGetId($attributes = []){
 		if(!empty($attributes)){
 			foreach($attributes as $attributeIndex => $attribute){
-				if(!tnAttributes::where('name', $attribute->es)->first()){
+				if(!tnAttributes::where('tn_store_id', $this->token['store_id'])->first()){
 					tnAttributes::create([
 						'tn_store_id'       => $this->token['store_id'],
 						'name'              => $attribute->es,
@@ -196,8 +201,6 @@ class TiendaNubeService {
 						'parent'            => $category->parent,
 						'seo_title'         => $category->seo_title->es,
 						'seo_description'   => $category->seo_description->es,
-						//'subcategories'     => !empty($categoryProducts->subcategories) ?
-						//$categoryProducts->subcategories[$categoryProductsIndex] : null,
 						'mage_category_entity_id' => null
 					]);
 				}
@@ -205,8 +208,10 @@ class TiendaNubeService {
 		}
 	}
 	
+	
 	/**
 	 * @param $productDetail
+	 * @return mixed
 	 */
 	private function saveTnProductFieldOnDB($productDetail){
 		if(!tnProducts::where('id', $productDetail->id)->first()){

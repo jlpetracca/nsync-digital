@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 use App\Helpers\ApiResponse;
-use App\Jobs\ProcessProducts;
 use App\Services\TiendaNubeService;
 use App\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller {
@@ -38,37 +35,25 @@ class ServiceController extends Controller {
             'code'         => $request['code']
         ];
         $this->tiendaNube->setAccessToken($credentials);
-		$this->validateUser();
+		$this->validateAndAuthUserTn();
         return ApiResponse::response(200, 'OK', null);
     }
     
-	private function validateUser(){
+	private function validateAndAuthUserTn(){
 		$store = $this->tiendaNube->getStore();
-	    if(User::where('email', $store->body->email)->count()){
-		    $user = User::where('email', $store->body->email)->first();
-		    Auth::login($user);
-	    }
-	    else{
-		    //$this->tiendaNube->getWebHook();
+	    if(!User::where('email', $store->body->email)->count()){
 		    $this->tiendaNube->saveTiendaNubeStore();
-		    $this->tiendaNube->syncProducts();
+		    $this->tiendaNube->getTnProducts();
 		    User::create([
-		    	'name'          => $store->body->name->es,
+			    'name'          => $store->body->name->es,
 			    'email'         => $store->body->email,
-			    'password'      => $this->generatePasswordForUser(),
+			    'password'      => ApiResponse::generatePasswordForUser(),
 			    'status'        => true,
 			    'marketplace'   => $this->tiendaNube::MARKETPLACE_ID,
 			    'store_name'    => 'Tienda Nube'
 		    ]);
 	    }
+		$user = User::where('email', $store->body->email)->first();
+		Auth::login($user);
     }
-	
-	/**
-	 * @return string
-	 */
-	private function generatePasswordForUser(){
-	    $passwordGenerated = Password::getRepository()->createNewToken();
-	    return Hash::make($passwordGenerated);
-    }
-
 }
