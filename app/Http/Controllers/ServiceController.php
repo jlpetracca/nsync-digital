@@ -46,12 +46,12 @@ class ServiceController extends Controller {
 		$store = $this->tiendaNube->getStore();
 	    if(User::where('email', $store->body->email)->count()){
 		    $user = User::where('email', $store->body->email)->first();
-		    //$this->tiendaNube->getWebHook();
-		    //$this->tiendaNube->saveTiendaNubeStore();
-		    $this->tiendaNube->syncProducts();
 		    Auth::login($user);
 	    }
 	    else{
+		    //$this->tiendaNube->getWebHook();
+		    $this->tiendaNube->saveTiendaNubeStore();
+		    $this->tiendaNube->syncProducts();
 		    User::create([
 		    	'name'          => $store->body->name->es,
 			    'email'         => $store->body->email,
@@ -60,8 +60,6 @@ class ServiceController extends Controller {
 			    'marketplace'   => $this->tiendaNube::MARKETPLACE_ID,
 			    'store_name'    => 'Tienda Nube'
 		    ]);
-		    //$job = new ProcessProducts($this->tiendaNube);
-		    //$job->delay(30);
 	    }
     }
 	
