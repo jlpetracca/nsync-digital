@@ -7,6 +7,7 @@ use App\tnProductImages;
 use App\tnProducts;
 use App\tnStore;
 use App\tnVariants;
+use Illuminate\Database\Eloquent\Model;
 
 class TiendaNubeService {
 	
@@ -78,7 +79,7 @@ class TiendaNubeService {
 			//Process and save the attributes array
 			$this->saveTnAttributesOnDBAndGetId($product->attributes);
 			//Process Variants and retrieve values
-			$aValues = $this->saveTnVariantsOnDBAndGetAvalues($product->variants);
+			$aValues = $this->saveTnVariantsOnDBAndGetAvalues($product->id, $product->variants);
 			//Process aValues and assign aId
 			$this->saveAvaluesAndAssignAIdOnDB($aValues);
 			//Process tnImages
@@ -93,10 +94,6 @@ class TiendaNubeService {
 	 * @return mixed
 	 */
 	private function saveAvaluesAndAssignAIdOnDB($aValues = []){
-		$attributeIds = tnAttributes::where('id' ,'>' ,0)
-			->where('tn_store_id', $this->token['store_id'])
-			->pluck('id')
-			->toArray();
 		foreach($aValues as $valuesObject) {
 			if(!empty($valuesObject)){
 				foreach($valuesObject as $aId => $value){
@@ -104,7 +101,7 @@ class TiendaNubeService {
 						tnAttributesValues::create([
 							'tn_store_id'   => $this->token['store_id'],
 							'value'         => $value->es,
-							'attribute_id'  => $attributeIds[$aId],
+							'attribute_id'  => $this->getModelIds(new tnAttributes())[$aId],
 							'mage_value_id' => null
 						]);
 					}
@@ -132,10 +129,11 @@ class TiendaNubeService {
 	}
 	
 	/**
-	 * @param $variants
+	 * @param $productId
+	 * @param array $variants
 	 * @return mixed
 	 */
-	private function saveTnVariantsOnDBAndGetAvalues($variants = []){
+	private function saveTnVariantsOnDBAndGetAvalues($productId, $variants = []){
 		$attributeValues = [];
 		if(!empty($variants)){
 			foreach ($variants as $variantIndex => $variant){
@@ -143,7 +141,7 @@ class TiendaNubeService {
 					tnVariants::create([
 						'id'                => $variant->id,
 						'tn_store_id'       => $this->token['store_id'],
-						'product_id'        => null,
+						'product_id'        => $productId,
 						'image_id'          => null,
 						'position'          => $variant->position,
 						'price'             => $variant->price,
@@ -232,6 +230,18 @@ class TiendaNubeService {
 				'status'            => null,
 			]);
 		}
+	}
+	
+	/**
+	 * @param Model $model
+	 * @return mixed
+	 */
+	private function getModelIds(Model $model){
+		$modelIds = $model::where('id' ,'>' ,0)
+			->where('tn_store_id', $this->token['store_id'])
+			->pluck('id')
+			->toArray();
+		return $modelIds;
 	}
 	
 }
