@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class tnVariantsAttributes extends Model
 {
 	protected $table = 'tn_variants_attributes';
+	public $timestamps = false;
 	
 	/**
 	 * The attributes that are mass assignable.

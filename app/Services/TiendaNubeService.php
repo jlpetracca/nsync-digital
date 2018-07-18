@@ -7,6 +7,7 @@ use App\tnProductImages;
 use App\tnProducts;
 use App\tnStore;
 use App\tnVariants;
+use App\tnVariantsAttributes;
 use Illuminate\Database\Eloquent\Model;
 
 class TiendaNubeService {
@@ -73,20 +74,70 @@ class TiendaNubeService {
 	 * @param $products
 	 */
 	private function processTnProducts($products){
+		$variantsAttributesStructure = [];
 		foreach($products->body as $productIndex => $product){
 			//Process tnProduct
 			$this->saveTnProductFieldOnDB($product);
 			//Process and save the attributes array
-			$this->saveTnAttributesOnDBAndGetId($product->attributes);
+			$this->saveTnAttributesOnDB($product->attributes);
 			//Process Variants and retrieve values
-			$aValues = $this->saveTnVariantsOnDBAndGetAvalues($product->id, $product->variants);
+			$variantsWithAvalues = $this->saveTnVariantsOnDBAndGetAvalues($product->id, $product->variants);
+			//Structure Variants Attributes
+			$variantsAttributesStructure = self::getVariantsAttributesStructure($product->id, $variantsWithAvalues);
+			
 			//Process aValues and assign aId
-			$this->saveAvaluesAndAssignAIdOnDB($aValues);
+			//$this->saveAvaluesAndAssignAIdOnDB($aValues);
+			
 			//Process tnImages
 			$this->saveTnImagesOnDB($product->images);
 			//Process tnCategories
 			$this->saveTnCategoriesOnDB($product->categories);
 		}
+		$this->saveVariantsAttributesAndAvalues($variantsAttributesStructure);
+	}
+	
+	/**
+	 * @param $structure
+	 * @return string
+	 */
+	private function saveVariantsAttributesAndAvalues($structure){
+		//Save TnVariantsAttributes
+		var_dump($structure);
+	}
+	
+	/**
+	 * @param $productId
+	 * @param array $variantsWithAValues
+	 * @return array
+	 */
+	private function getVariantsAttributesStructure($productId, $variantsWithAValues = []){
+		$structure = [];
+		foreach ($variantsWithAValues as $properties){
+			foreach ($properties['aValues'] as $attributeId => $aValue){
+				$structure[] = [
+					'productId'     => $productId,
+					'variantId'     => $properties['variantId'],
+					'aValueId'      => $this->getAvalueId($aValue->es, $attributeId)['id'],
+					'attributeId'   => $this->getModelIds(new tnAttributes())[$attributeId]
+				];
+			}
+		}
+		return $structure;
+	}
+	
+	private function getAvalueId($value, $indexValue){
+		$aValuesId = null;
+		if (!tnAttributesValues::where('value', $value)->first()) {
+			$aValuesId = tnAttributesValues::create([
+				'tn_store_id'   => $this->token['store_id'],
+				'value'         => $value,
+				'attribute_id'  => $this->getModelIds(new tnAttributes())[$indexValue],
+				'mage_value_id' => null
+			]);
+		}else{
+			return tnAttributesValues::where('value', $value)->first();
+		}
+		return $aValuesId;
 	}
 	
 	/**
@@ -94,27 +145,31 @@ class TiendaNubeService {
 	 * @return mixed
 	 */
 	private function saveAvaluesAndAssignAIdOnDB($aValues = []){
-		foreach($aValues as $valuesObject) {
-			if(!empty($valuesObject)){
-				foreach($valuesObject as $aId => $value){
-					if(!tnAttributesValues::where('value',  $value->es)->first()){
-						tnAttributesValues::create([
-							'tn_store_id'   => $this->token['store_id'],
-							'value'         => $value->es,
-							'attribute_id'  => $this->getModelIds(new tnAttributes())[$aId],
-							'mage_value_id' => null
-						]);
-					}
+		$aValuesIds = [];
+		if(!empty($aValues)) {
+			foreach ($aValues as $aId => $value) {
+				if (!tnAttributesValues::where('value', $value->es)->first()) {
+					$aValuesId = tnAttributesValues::create([
+						'tn_store_id'   => $this->token['store_id'],
+						'value'         => $value->es,
+						'attribute_id'  => $this->getModelIds(new tnAttributes())[$aId],
+						'mage_value_id' => null
+					]);
+					$aValuesIds[] = [
+						'aValueId'      => $aValuesId->id,
+						'attributeId'   => $this->getModelIds(new tnAttributes())[$aId]
+					];
 				}
 			}
 		}
+		return $aValuesIds;
 	}
 	
 	/**
 	 * @param $attributes
 	 * @return mixed
 	 */
-	private function saveTnAttributesOnDBAndGetId($attributes = []){
+	private function saveTnAttributesOnDB($attributes = []){
 		if(!empty($attributes)){
 			foreach($attributes as $attributeIndex => $attribute){
 				if(!tnAttributes::where('name', $attribute->es)->where('tn_store_id', $this->token['store_id'])->first()){
@@ -134,7 +189,7 @@ class TiendaNubeService {
 	 * @return mixed
 	 */
 	private function saveTnVariantsOnDBAndGetAvalues($productId, $variants = []){
-		$attributeValues = [];
+		$variantsWithAvalues = [];
 		if(!empty($variants)){
 			foreach ($variants as $variantIndex => $variant){
 				if(!tnVariants::where('id', $variant->id)->first()){
@@ -156,11 +211,11 @@ class TiendaNubeService {
 						'barcode'           => $variant->barcode,
 						'status'            => true
 					]);
-					$attributeValues[] = $variant->values;
+					$variantsWithAvalues[] = ['variantId' => $variant->id, 'aValues' => $variant->values];
 				}
 			}
-			return $attributeValues;
 		}
+		return $variantsWithAvalues;
 	}
 	
 	/**
