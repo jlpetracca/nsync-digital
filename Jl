@@ -1,0 +1,28 @@
+[
+				"0" => [
+						'variant 1' => 1, 
+					     'aValues' => []
+				].
+				"1" => [
+					"1.0" => 'variant 2' => 2, 
+					'aValues' => ['a', 'b']
+				].
+				"2" =>[
+					'variant 3' => 3, 
+					'aValues' => ['a', 'b']
+				]
+				"3" => [
+					'variant 4' => 4, 
+					'aValues' => ['a', 'b']
+				]
+			], 
+				foreach(attributes as attribute){
+					foreach(variants as variant){
+						foreach(subVariant as sub){
+							foreach(sub as aValues => avaluesbb){
+								$attributes[aValues],
+
+							}
+						}
+					}
+				}

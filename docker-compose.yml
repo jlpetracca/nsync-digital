@@ -6,7 +6,7 @@ services:
       mode: replicated
       replicas: 1
     ports:
-     - "97:80"
+     - "80:80"
     volumes:
      - .:/nsync
   db:
