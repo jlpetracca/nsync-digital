@@ -3,6 +3,7 @@ namespace App\Services;
 use App\tnAttributes;
 use App\tnAttributesValues;
 use App\tnCategories;
+use App\tnCategoryProducts;
 use App\tnProductImages;
 use App\tnProducts;
 use App\tnStore;
@@ -78,18 +79,18 @@ class TiendaNubeService {
 	 */
 	private function processTnProducts($products){
 		foreach($products->body as $productIndex => $product){
-			//Process tnProduct
+			//Save tnProduct
 			$this->saveTnProductFieldOnDB($product);
-			//Process and save the attributes array
+			//Save and save the attributes array
 			$this->saveTnAttributesOnDB($product->attributes);
-			//Process Variants and retrieve values
+			//Save Variants and retrieve values
 			$aValuesWithVIds = $this->saveTnVariantsOnDBAndGetAvaluesWithVIds($product->id, $product->variants);
 			//Structure Variants Attributes
 			$this->getVariantsAttributesStructure($product->id, $aValuesWithVIds);
-			//Process tnImages
+			//Save tnImages
 			$this->saveTnImagesOnDB($product->images);
-			//Process tnCategories
-			$this->saveTnCategoriesOnDB($product->categories);
+			//Save tnCategories
+			$this->saveTnCategoriesOnDB($product->id, $product->categories);
 		}
 	}
 	
@@ -205,7 +206,7 @@ class TiendaNubeService {
 	/**
 	 * @param array $categories
 	 */
-	private function saveTnCategoriesOnDB($categories = []){
+	private function saveTnCategoriesOnDB($productId, $categories = []){
 		if(!empty($categories)){
 			foreach($categories as $categoryIndex => $category){
 				if(!tnCategories::where('id', $category->id)->first()){
@@ -220,6 +221,14 @@ class TiendaNubeService {
 						'seo_description'   => $category->seo_description->es,
 						'mage_category_entity_id' => null
 					]);
+					
+					if(!tnCategoryProducts::where('category_id', $category->id)->first()){
+						tnCategoryProducts::create([
+							'category_id'  => $category->id,
+							'store_id'     => $this->token['store_id'],
+							'product_id'   => $productId
+						]);
+					}
 				}
 			}
 		}
