@@ -4,9 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tnStore extends Model
+class tnVariantsAttributes extends Model
 {
-    protected $table = 'tn_store';
+	protected $table = 'tn_variants_attributes';
 	public $timestamps = false;
 	
 	/**
@@ -15,6 +15,6 @@ class tnStore extends Model
 	 * @var array
 	 */
 	protected $fillable = [
-		'id', 'nsync_store_id', 'token', 'app_status'
+		'tn_store_id', 'product_id', 'variant_id', 'attribute_id', 'attribute_value_id'
 	];
 }

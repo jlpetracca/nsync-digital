@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class tnAttributes extends Model
 {
-	protected $table = 'tnAttributes';
+	protected $table = 'tn_attributes';
+	public $timestamps = false;
 	
 	/**
 	 * The attributes that are mass assignable.
