@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Http\Request;
-
+use App\Services\BackgroundProcessTn;
+use App\tnStore;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -15,4 +16,12 @@ use Illuminate\Http\Request;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::get('/backgroundTn', function () {
+	$stores = tnStore::all()->where('app_status', 1)->all();
+	$backgroundProcess = new BackgroundProcessTn();
+	foreach ($stores as $store){
+		$backgroundProcess->backgroundProcess($store->token, $store->id);
+	}
 });
