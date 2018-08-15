@@ -53,6 +53,13 @@ class TiendaNubeService {
 				'app_status'        => self::APP_STATUS
 			]);
 		}
+		else{
+			tnStore::find($this->token['store_id'])->update([
+				'nsync_store_id'    => null,
+				'token'             => $this->token['access_token'],
+				'app_status'        => self::APP_STATUS
+			]);
+		}
 	}
 	
 	/**
@@ -77,7 +84,7 @@ class TiendaNubeService {
 	/**
 	 * @param $products
 	 */
-	private function processTnProducts($products){
+	public function processTnProducts($products){
 		foreach($products->body as $productIndex => $product){
 			//Save tnProduct
 			$this->saveTnProductFieldOnDB($product);

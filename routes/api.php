@@ -22,6 +22,6 @@ Route::get('/backgroundTn', function () {
 	$stores = tnStore::all()->where('app_status', 1)->all();
 	$backgroundProcess = new BackgroundProcessTn();
 	foreach ($stores as $store){
-		$backgroundProcess->backgroundProcess($store->token, $store->id);
+		$backgroundProcess->backgroundProcess($store->id, $store->token);
 	}
 });

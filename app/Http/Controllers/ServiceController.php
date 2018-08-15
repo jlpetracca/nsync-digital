@@ -41,6 +41,8 @@ class ServiceController extends Controller {
 
 	private function validateAndAuthUserTn(){
 		$store = $this->tiendaNube->getStore();
+		$this->tiendaNube->saveTiendaNubeStore();
+		$this->tiendaNube->getTnProducts();
 	    if(!User::where('email', $store->body->email)->count()){
 		    User::create([
 			    'name'          => $store->body->name->es,
@@ -48,7 +50,7 @@ class ServiceController extends Controller {
 			    'password'      => ApiResponse::generatePasswordForUser(),
 			    'status'        => true,
 			    'marketplace'   => $this->tiendaNube::MARKETPLACE_ID,
-			    'store_name'    => 'Tienda Nube'
+			    'store_name'    => 'Nsync Digital'
 		    ]);
 		    $this->tiendaNube->saveTiendaNubeStore();
 		    $this->tiendaNube->getTnProducts();
