@@ -24,4 +24,5 @@ Route::get('/backgroundTn', function () {
 	foreach ($stores as $store){
 		$backgroundProcess->backgroundProcess($store->id, $store->token);
 	}
+	return response()->json(['response' => 'executed correctly', 'status' => 200]);
 });

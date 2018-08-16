@@ -12,6 +12,6 @@ class BackgroundProcessTn
 		$api = new \TiendaNube\API($storeId, $token, 'Nsync Digital (nsync@nsync.co)');
 		$products = $api->get("products/?sort_by=best-selling&published=true&per_page=50");
 		$tiendaNubeService = new TiendaNubeService();
-		$tiendaNubeService->processTnProducts($products);
+		$tiendaNubeService->setStoreId($storeId)->processTnProducts($products);
 	}
 }

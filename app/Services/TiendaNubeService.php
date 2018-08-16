@@ -34,6 +34,15 @@ class TiendaNubeService {
 	}
 	
 	/**
+	 * @param string $storeId
+	 * @return $this
+	 */
+	public function setStoreId(string $storeId){
+		$this->token['store_id'] = $storeId;
+		return $this;
+	}
+	
+	/**
 	 * @return \TiendaNube\TiendaNube
 	 */
 	public function getStore(){
@@ -41,25 +50,18 @@ class TiendaNubeService {
 			'Nsync Digital (nsync@nsync.co)');
 		return $api->get("store");
 	}
+	
 	/*
 	 * Save Principal storeInfo
 	 */
 	public function saveTiendaNubeStore(){
-		if(!tnStore::where('id', $this->token['store_id'])->first()){
-			tnStore::create([
-				'id'                => $this->token['store_id'],
-				'nsync_store_id'    => null,
-				'token'             => $this->token['access_token'],
-				'app_status'        => self::APP_STATUS
-			]);
-		}
-		else{
-			tnStore::find($this->token['store_id'])->update([
-				'nsync_store_id'    => null,
-				'token'             => $this->token['access_token'],
-				'app_status'        => self::APP_STATUS
-			]);
-		}
+		$tnStoreInfo = [
+			'id'                => $this->token['store_id'],
+			'nsync_store_id'    => null,
+			'token'             => $this->token['access_token'],
+			'app_status'        => self::APP_STATUS
+		];
+		self::saveOrUpdateTn(new tnStore(), $tnStoreInfo,'id', $this->token['store_id']);
 	}
 	
 	/**
@@ -108,13 +110,29 @@ class TiendaNubeService {
 	private function getVariantsAttributesStructure($productId, $variantsWithAValues = []){
 		foreach ($variantsWithAValues as $properties){
 			foreach ($properties['aValues'] as $attributeId => $aValue){
-				tnVariantsAttributes::create([
+				$variantsAttributeInfo = [
 					'tn_store_id'           => $this->token['store_id'],
 					'product_id'            => $productId,
 					'variant_id'            => $properties['variantId'],
 					'attribute_value_id'    => $this->getAvalueId($aValue->es, $attributeId)['id'],
 					'attribute_id'          => $this->getModelIds(new tnAttributes())[$attributeId]
-				]);
+				];
+				
+				if(!tnVariantsAttributes::where('tn_store_id',$this->token['store_id'])
+					->where('variant_id', $properties['variantId'])
+					->where('product_id', $productId)
+					->where('attribute_value_id', $this->getAvalueId($aValue->es, $attributeId)['id'])
+					->where('attribute_id', $this->getModelIds(new tnAttributes())[$attributeId])
+					->first()){
+					tnVariantsAttributes::create($variantsAttributeInfo);
+				}
+				else{
+					tnVariantsAttributes::where('variant_id', $properties['variantId'])
+						->where('product_id', $productId)
+						->where('attribute_value_id', $this->getAvalueId($aValue->es, $attributeId)['id'])
+						->where('attribute_id', $this->getModelIds(new tnAttributes())[$attributeId])
+						->update($variantsAttributeInfo);
+				}
 			}
 		}
 	}
@@ -134,12 +152,14 @@ class TiendaNubeService {
 				'mage_value_id' => null
 			]);
 		}
+		else{
+			$aValueId = tnAttributesValues::where('value', $value)->where('tn_store_id', $this->token['store_id'])->first();
+		}
 		return $aValueId;
 	}
 	
 	/**
 	 * @param $attributes
-	 * @return mixed
 	 */
 	private function saveTnAttributesOnDB($attributes = []){
 		if(!empty($attributes)){
@@ -150,6 +170,15 @@ class TiendaNubeService {
 						'name'              => $attribute->es,
 						'mage_attribute_id' => null
 					]);
+				}
+				else{
+					tnAttributes::where('name', $attribute->es)
+						->where('tn_store_id', $this->token['store_id'])
+						->update([
+							'tn_store_id'       => $this->token['store_id'],
+							'name'              => $attribute->es,
+							'mage_attribute_id' => null
+						]);
 				}
 			}
 		}
@@ -164,25 +193,31 @@ class TiendaNubeService {
 		$variantsWithAvalues = [];
 		if(!empty($variants)){
 			foreach ($variants as $variantIndex => $variant){
+				$variantInfo = [
+					'id'                => $variant->id,
+					'tn_store_id'       => $this->token['store_id'],
+					'product_id'        => $productId,
+					'image_id'          => null,
+					'position'          => $variant->position,
+					'price'             => $variant->price,
+					'promotional_price' => $variant->promotional_price,
+					'stock_management'  => $variant->stock_management,
+					'stock'             => $variant->stock,
+					'weight'            => $variant->weight,
+					'width'             => $variant->width,
+					'height'            => $variant->height,
+					'depth'             => $variant->depth,
+					'sku'               => $variant->sku,
+					'barcode'           => $variant->barcode,
+					'status'            => true
+				];
+				
 				if(!tnVariants::where('id', $variant->id)->first()){
-					tnVariants::create([
-						'id'                => $variant->id,
-						'tn_store_id'       => $this->token['store_id'],
-						'product_id'        => $productId,
-						'image_id'          => null,
-						'position'          => $variant->position,
-						'price'             => $variant->price,
-						'promotional_price' => $variant->promotional_price,
-						'stock_management'  => $variant->stock_management,
-						'stock'             => $variant->stock,
-						'weight'            => $variant->weight,
-						'width'             => $variant->width,
-						'height'            => $variant->height,
-						'depth'             => $variant->depth,
-						'sku'               => $variant->sku,
-						'barcode'           => $variant->barcode,
-						'status'            => true
-					]);
+					tnVariants::create($variantInfo);
+					$variantsWithAvalues[] = ['variantId' => $variant->id, 'aValues' => $variant->values];
+				}
+				else{
+					tnVariants::find($variant->id)->update($variantInfo);
 					$variantsWithAvalues[] = ['variantId' => $variant->id, 'aValues' => $variant->values];
 				}
 			}
@@ -196,75 +231,79 @@ class TiendaNubeService {
 	private function saveTnImagesOnDB($images = []){
 		if(!empty($images)){
 			foreach($images as $imageIndex => $image){
+				$imageInfo = [
+					'id'            => $image->id,
+					'tn_store_id'   => $this->token['store_id'],
+					'product_id'    => $image->product_id,
+					'src'           => $image->src,
+					'position'      => $image->position,
+					'alt'           => null
+				];
 				if(!tnProductImages::where('id', $image->id)->first()){
-					tnProductImages::create([
-						'id'            => $image->id,
-						'tn_store_id'   => $this->token['store_id'],
-						'product_id'    => $image->product_id,
-						'src'           => $image->src,
-						'position'      => $image->position,
-						'alt'           => null
-					]);
+					tnProductImages::create($imageInfo);
+				}else{
+					tnProductImages::find($image->id)->update($imageInfo);
 				}
 			}
 		}
 	}
 	
 	/**
+	 * @param $productId
 	 * @param array $categories
 	 */
 	private function saveTnCategoriesOnDB($productId, $categories = []){
 		if(!empty($categories)){
 			foreach($categories as $categoryIndex => $category){
-				if(!tnCategories::where('id', $category->id)->first()){
-					tnCategories::create([
-						'id'                => $category->id,
-						'tn_store_id'       => $this->token['store_id'],
-						'handle'            => $category->handle->es,
-						'name'              => $category->name->es,
-						'description'       => $category->description->es,
-						'parent'            => $category->parent,
-						'seo_title'         => $category->seo_title->es,
-						'seo_description'   => $category->seo_description->es,
-						'mage_category_entity_id' => null
-					]);
-					
-					if(!tnCategoryProducts::where('category_id', $category->id)->first()){
-						tnCategoryProducts::create([
-							'category_id'  => $category->id,
-							'store_id'     => $this->token['store_id'],
-							'product_id'   => $productId
-						]);
-					}
+				$categoryInfo = [
+					'id'                => $category->id,
+					'tn_store_id'       => $this->token['store_id'],
+					'handle'            => $category->handle->es,
+					'name'              => $category->name->es,
+					'description'       => $category->description->es,
+					'parent'            => $category->parent,
+					'seo_title'         => $category->seo_title->es,
+					'seo_description'   => $category->seo_description->es,
+					'mage_category_entity_id' => null
+				];
+				$categoryProductInfo = [
+					'category_id'  => $category->id,
+					'store_id'     => $this->token['store_id'],
+					'product_id'   => $productId
+				];
+				if(!tnCategories::where('id', $category->id)->first() && !tnCategoryProducts::where('category_id', $category->id)->first()){
+					tnCategories::create($categoryInfo);
+					tnCategoryProducts::create($categoryProductInfo);
+				}
+				else{
+					tnCategories::find($category->id)->update($categoryInfo);
+					tnCategoryProducts::where('category_id', $category->id)->update($categoryProductInfo);
 				}
 			}
 		}
 	}
 	
-	
 	/**
 	 * @param $productDetail
-	 * @return mixed
 	 */
 	private function saveTnProductFieldOnDB($productDetail){
-		if(!tnProducts::where('id', $productDetail->id)->first()){
-			tnProducts::create([
-				'id'                => $productDetail->id,
-				'tn_store_id'       => $this->token['store_id'],
-				'mage_entity_id'    => null,
-				'name'              => $productDetail->name->es,
-				'description'       => !empty($productDetail->description->es) ? $productDetail->description->es :
-					$productDetail->description->es = "No tiene descripción asociada",
-				'handle'            => $productDetail->handle->es,
-				'published'         => $productDetail->published,
-				'free_shipping'     => $productDetail->free_shipping,
-				'seo_title'         => $productDetail->seo_title->es,
-				'seo_description'   => $productDetail->seo_description->es,
-				'brand'             => $productDetail->brand,
-				'tags'              => $productDetail->tags,
-				'status'            => null,
-			]);
-		}
+		$productInfo = [
+			'id'                => $productDetail->id,
+			'tn_store_id'       => $this->token['store_id'],
+			'mage_entity_id'    => null,
+			'name'              => $productDetail->name->es,
+			'description'       => !empty($productDetail->description->es) ? $productDetail->description->es :
+				$productDetail->description->es = "No tiene descripción asociada",
+			'handle'            => $productDetail->handle->es,
+			'published'         => $productDetail->published,
+			'free_shipping'     => $productDetail->free_shipping,
+			'seo_title'         => $productDetail->seo_title->es,
+			'seo_description'   => $productDetail->seo_description->es,
+			'brand'             => $productDetail->brand,
+			'tags'              => $productDetail->tags,
+			'status'            => null
+		];
+		self::saveOrUpdateTn(new tnProducts(), $productInfo,'id', $productDetail->id);
 	}
 	
 	/**
@@ -277,6 +316,22 @@ class TiendaNubeService {
 			->pluck('id')
 			->toArray();
 		return $modelIds;
+	}
+	
+	/**
+	 * @param Model $model
+	 * @param array $records
+	 * @param string $defaultIdentifier
+	 * @param $identifier
+	 */
+	private static function saveOrUpdateTn(Model $model, array $records, string $defaultIdentifier, $identifier){
+		$search = $model::where($defaultIdentifier, $identifier)->first();
+		if(!empty($search)) {
+			$model::where($defaultIdentifier, $identifier)->update($records);
+		}
+		else{
+			$model::create($records);
+		}
 	}
 	
 }
