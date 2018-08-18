@@ -23,7 +23,7 @@ RUN apt-get update && apt-get -y install rsyslog && apt-get clean
 RUN sed -i '1s/^/$MaxMessageSize 64k\n/' /etc/rsyslog.conf
 
 # composer:
-COPY .docker/composer-install.sh /tmp
+COPY docker/composer-install.sh /tmp
 RUN /tmp/composer-install.sh && mv /usr/local/bin/composer.phar /usr/local/bin/composer
 
 # DIR
@@ -31,8 +31,7 @@ WORKDIR /nsync
 COPY . ./
 
 # apache:
-COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 RUN chown -R www-data:www-data ./ && a2enmod rewrite
 RUN composer install
 USER root
-
