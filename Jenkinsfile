@@ -2,9 +2,7 @@ pipeline {
   agent {
     docker {
       image 'jfernancordova/nsync-digital:1.0.0'
-      args '-p 80:80'
     }
-
   }
   stages {
     stage('Build') {
