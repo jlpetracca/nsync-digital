@@ -42,7 +42,7 @@ services:
       MYSQL_PASSWORD: nsync
       MYSQL_ROOT_PASSWORD: nsync
     volumes:
-      - ../backend/docker/local-mysql-nsync:/var/lib/mysql
+      - nsync:/var/lib/mysql
     deploy:
       mode: replicated
       replicas: 1
@@ -52,5 +52,9 @@ services:
       - nsync
 
 networks:
+  nsync:
+    external: true
+
+volumes:
   nsync:
     external: true

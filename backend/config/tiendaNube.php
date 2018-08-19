@@ -1,6 +1,9 @@
 <?php
 
 return [
-	'clientId' => '668',
-	'clientSecret' => '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz'
+	'client_id'         => env('CLIENT_ID_TIENDA_NUBE'),
+	'client_secret'     => env('CLIENT_SECRET_TIENDA_NUBE'),
+	'url'               => env('URL_TIENDA_NUBE'),
+	'marketplace_id'    => env('MARKETPLACE_ID'),
+	'app_status'        => env('TIENDA_NUBE_APP_STATUS')
 ];
