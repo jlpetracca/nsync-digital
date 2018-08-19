@@ -20,7 +20,7 @@ class ServiceController extends Controller {
 	 * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
 	 */
 	function doLoginTiendaNube(){
-		return redirect($this->tiendaNube::URL_TIENDA_NUBE);
+		return redirect(config('tiendaNube.url'));
     }
 
 	/**
@@ -30,8 +30,8 @@ class ServiceController extends Controller {
 	 */
 	public function tiendaNubeManager(Request $request){
         $credentials = [
-            'clientId'     => $this->tiendaNube::CLIENT_ID_TIENDA_NUBE,
-            'clientSecret' => $this->tiendaNube::CLIENT_SECRET_TIENDA_NUBE,
+            'clientId'     => config('tiendaNube.client_id'),
+            'clientSecret' => config('tiendaNube.client_secret'),
             'code'         => $request['code']
         ];
         $this->tiendaNube->setAccessToken($credentials);
@@ -48,7 +48,7 @@ class ServiceController extends Controller {
 			    'email'         => $store->body->email,
 			    'password'      => ApiResponse::generatePasswordForUser(),
 			    'status'        => true,
-			    'marketplace'   => $this->tiendaNube::MARKETPLACE_ID,
+			    'marketplace'   => config('tiendaNube.marketplace_id'),
 			    'store_name'    => 'Nsync Digital'
 		    ]);
 		    $this->tiendaNube->getTnProducts();

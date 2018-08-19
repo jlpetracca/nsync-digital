@@ -15,12 +15,6 @@ class TiendaNubeService {
 	
 	protected $token;
 	
-	const APP_STATUS                = 1;
-	const URL_TIENDA_NUBE           = 'https://www.tiendanube.com/apps/668/authorize';
-	const CLIENT_ID_TIENDA_NUBE     = '668';
-	const CLIENT_SECRET_TIENDA_NUBE = '0d1RCsc673OHbquxcts3JJv26NdkIUV0sQ4I8ZuUpI1RU2gz';
-	const MARKETPLACE_ID            = 1;
-
 	/**
 	 * @param array $credentials
 	 * @return $this
@@ -55,13 +49,15 @@ class TiendaNubeService {
 	 * Save Principal storeInfo
 	 */
 	public function saveTiendaNubeStore(){
+		$storeId  = $this->token['store_id'];
 		$tnStoreInfo = [
-			'id'                => $this->token['store_id'],
+			'id'                => $storeId,
 			'nsync_store_id'    => null,
 			'token'             => $this->token['access_token'],
-			'app_status'        => self::APP_STATUS
+			'app_status'        => config('tiendaNube.app_status')
 		];
-		self::saveOrUpdateTn(new tnStore(), $tnStoreInfo,'id', $this->token['store_id']);
+		$verify = tnStore::where('id', $this->token['store_id']);
+		$this->saveOrUpdateRecords($verify, new tnStore(), $tnStoreInfo);
 	}
 	
 	/**
@@ -143,44 +139,33 @@ class TiendaNubeService {
 	 * @return null
 	 */
 	private function getAvalueId($value, $indexValue){
-		$aValueId = tnAttributesValues::where('value', $value)->first();
-		if (!$aValueId) {
-			$aValueId = tnAttributesValues::create([
-				'tn_store_id'   => $this->token['store_id'],
-				'value'         => $value,
-				'attribute_id'  => $this->getModelIds(new tnAttributes())[$indexValue],
-				'mage_value_id' => null
-			]);
-		}
-		else{
-			$aValueId = tnAttributesValues::where('value', $value)->where('tn_store_id', $this->token['store_id'])->first();
-		}
-		return $aValueId;
+		$tnAttributeValue = [
+			'tn_store_id'   => $this->token['store_id'],
+			'value'         => $value,
+			'attribute_id'  => $this->getModelIds(new tnAttributes())[$indexValue],
+			'mage_value_id' => null
+		];
+		$verifyRecord = tnAttributesValues::where('value', $value)->where('tn_store_id', $this->token['store_id']);
+		$this->saveOrUpdateRecords($verifyRecord, new tnAttributesValues(), $tnAttributeValue);
+		return $verifyRecord->first();
 	}
 	
 	/**
 	 * @param $attributes
 	 */
 	private function saveTnAttributesOnDB($attributes = []){
+		$attributesInfo = [];
+		$verifyRecord = null;
 		if(!empty($attributes)){
 			foreach($attributes as $attributeIndex => $attribute){
-				if(!tnAttributes::where('name', $attribute->es)->where('tn_store_id', $this->token['store_id'])->first()){
-					tnAttributes::create([
-						'tn_store_id'       => $this->token['store_id'],
-						'name'              => $attribute->es,
-						'mage_attribute_id' => null
-					]);
-				}
-				else{
-					tnAttributes::where('name', $attribute->es)
-						->where('tn_store_id', $this->token['store_id'])
-						->update([
-							'tn_store_id'       => $this->token['store_id'],
-							'name'              => $attribute->es,
-							'mage_attribute_id' => null
-						]);
-				}
+				$attributesInfo[] = [
+					'tn_store_id'       => $this->token['store_id'],
+					'name'              => $attribute->es,
+					'mage_attribute_id' => null
+				];
+				$verifyRecord = tnAttributes::where('name', $attribute->es)->where('tn_store_id', $this->token['store_id']);
 			}
+			$this->saveOrUpdateRecords($verifyRecord, new tnAttributes(), $attributesInfo, false);
 		}
 	}
 	
@@ -211,7 +196,6 @@ class TiendaNubeService {
 					'barcode'           => $variant->barcode,
 					'status'            => true
 				];
-				
 				if(!tnVariants::where('id', $variant->id)->first()){
 					tnVariants::create($variantInfo);
 					$variantsWithAvalues[] = ['variantId' => $variant->id, 'aValues' => $variant->values];
@@ -229,9 +213,11 @@ class TiendaNubeService {
 	 * @param array $images
 	 */
 	private function saveTnImagesOnDB($images = []){
+		$imagesInfo = [];
+		$verifyRecord = null;
 		if(!empty($images)){
 			foreach($images as $imageIndex => $image){
-				$imageInfo = [
+				$imageInfo[] = [
 					'id'            => $image->id,
 					'tn_store_id'   => $this->token['store_id'],
 					'product_id'    => $image->product_id,
@@ -239,12 +225,9 @@ class TiendaNubeService {
 					'position'      => $image->position,
 					'alt'           => null
 				];
-				if(!tnProductImages::where('id', $image->id)->first()){
-					tnProductImages::create($imageInfo);
-				}else{
-					tnProductImages::find($image->id)->update($imageInfo);
-				}
+				$verifyRecord = tnProductImages::where('id', $image->id);
 			}
+			$this->saveOrUpdateRecords($verifyRecord, new tnProductImages(), $imagesInfo, false);
 		}
 	}
 	
@@ -287,8 +270,9 @@ class TiendaNubeService {
 	 * @param $productDetail
 	 */
 	private function saveTnProductFieldOnDB($productDetail){
+		$productId = $productDetail->id;
 		$productInfo = [
-			'id'                => $productDetail->id,
+			'id'                => $productId,
 			'tn_store_id'       => $this->token['store_id'],
 			'mage_entity_id'    => null,
 			'name'              => $productDetail->name->es,
@@ -303,7 +287,8 @@ class TiendaNubeService {
 			'tags'              => $productDetail->tags,
 			'status'            => null
 		];
-		self::saveOrUpdateTn(new tnProducts(), $productInfo,'id', $productDetail->id);
+		$verify = tnProducts::where('id', $productId);
+		$this->saveOrUpdateRecords($verify, new tnProducts(), $productInfo);
 	}
 	
 	/**
@@ -318,19 +303,31 @@ class TiendaNubeService {
 		return $modelIds;
 	}
 	
+	
 	/**
+	 * @param $verifyRecord
 	 * @param Model $model
-	 * @param array $records
-	 * @param string $defaultIdentifier
-	 * @param $identifier
+	 * @param $records
+	 * @param bool $identifyRecords
 	 */
-	private static function saveOrUpdateTn(Model $model, array $records, string $defaultIdentifier, $identifier){
-		$search = $model::where($defaultIdentifier, $identifier)->first();
-		if(!empty($search)) {
-			$model::where($defaultIdentifier, $identifier)->update($records);
+	private function saveOrUpdateRecords($verifyRecord, Model $model, $records, $identifyRecords = true){
+		if ($identifyRecords) {
+			if(!is_null($verifyRecord->first())) {
+				$verifyRecord->update($records);
+			}
+			else{
+				$model::create($records);
+			}
 		}
-		else{
-			$model::create($records);
+		else {
+			foreach ($records as $record){
+				if(!is_null($verifyRecord->first())) {
+					$verifyRecord->update($record);
+				}
+				else{
+					$model::create($record);
+				}
+			}
 		}
 	}
 	
