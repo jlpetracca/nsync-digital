@@ -14,7 +14,7 @@ services:
       - nsync
 
   backend:
-    image: nsync-digital:1.0.0
+    image: jfernancordova/nsync-digital:1.0.0
     deploy:
       mode: replicated
       replicas: 1
@@ -51,10 +51,28 @@ services:
     networks:
       - nsync
 
+  jenkins:
+    image: jenkinsci/blueocean
+    ports:
+    - 8085:8080
+    - 50000:50000
+    volumes:
+    - jenkins-data:/var/jenkins_home
+    - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: none
+    networks:
+    - nsync
+
 networks:
   nsync:
     external: true
 
 volumes:
   nsync:
+    external: true
+  jenkins-data:
     external: true
