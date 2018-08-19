@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh 'echo build'
+        sh 'echo build...'
       }
     }
     stage('Test') {
@@ -15,12 +15,12 @@ pipeline {
         CI = 'true'
       }
       steps {
-        sh 'echo test'
+        sh 'echo test...'
       }
     }
     stage('Deliver') {
       steps {
-        sh './jenkins/scripts/kill.sh'
+         sh 'echo deliver...'
       }
     }
   }
