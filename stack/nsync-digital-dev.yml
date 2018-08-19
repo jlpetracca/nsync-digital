@@ -14,7 +14,7 @@ services:
       - nsync
 
   backend:
-    image: nsync-digital:1.0.0
+    image: jfernancordova/nsync-digital:1.0.0
     deploy:
       mode: replicated
       replicas: 1
