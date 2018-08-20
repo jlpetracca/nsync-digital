@@ -2,3 +2,7 @@
 \.idea/
 
 magento/env/\.env
+
+*.txt
+
+*.jar
