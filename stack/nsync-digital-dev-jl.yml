@@ -82,3 +82,10 @@ services:
       restart_policy:
         condition: none
 
+  elasticsearch:
+    image: 'elasticsearch:5'
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    volumes:
+      - ../elk/esdata:/usr/share/elasticsearch/data

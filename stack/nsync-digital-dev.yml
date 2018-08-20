@@ -104,6 +104,14 @@ services:
     networks:
       - nsync
 
+  elasticsearch:
+    image: 'elasticsearch:5'
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    volumes:
+      - ../elk/esdata:/usr/share/elasticsearch/data
+
 networks:
   nsync:
     external: true
